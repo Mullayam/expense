@@ -1,6 +1,7 @@
 import { FallbackSpinner } from "@/components/common/fallbackSpinner"
 import { Login } from "@/pages/auth/login"
 import { RootLayout } from "@/pages/dashboard/layout"
+import Notfound2 from "@/pages/error/notfound"
 import AddExpense from "@/pages/screens/expense/addExpense"
 import { ExpenseCategoryManager } from "@/pages/screens/expense/addExpenseCateogry"
 import { AllExpenseList } from "@/pages/screens/expense/allExpensesList"
@@ -43,5 +44,9 @@ export const router = createBrowserRouter([
                 element: <IncomeSourceForm />
             }
         ]
-    }
+    },
+    {
+        path: "*",
+        element: <Notfound2 />
+    },
 ])
