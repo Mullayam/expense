@@ -10,13 +10,18 @@ class ApiHandlers {
     handleRegister = async (data: { email: string, password: string,name:string }) => {
         return api.post('/register', { data });
     }
-    getAllExpenses = async () => {
-        return api.get('/get-expense');
+    getAllExpenses = async (dateRange?: { startDate: string, endDate: string }) => {
+        return api.get('/get-expense',{
+            params: {
+                startDate: dateRange?.startDate,
+                endDate: dateRange?.endDate
+            }
+        });
     }
-    addNewExpense = async (data: { type: string, category: string, description: string, amount: number, date: string }) => {
+    addNewExpense = async (data: { type: string, category: string, description: string, amount: string, date: string }) => {
         return api.post('/add-new-expense',data);
     }
-    updateCurrentExpense = async (id: string, data: { type: string, category: string, description: string, amount: number, date: string }) => {
+    updateCurrentExpense = async (id: string, data: { type: string, category: string, description: string, amount: string, date: string }) => {
         return api.put('/add-new-expense/' + id, data);
     }
     deleteExpense = async (id: string) => {

@@ -1,4 +1,5 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { addDays } from "date-fns"
 import * as React from "react"
 import moment from 'moment'
 import {
@@ -14,7 +15,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { ChevronDown, Loader2, MoreHorizontal } from "lucide-react"
-
+import { sentenceCase } from "change-case"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -37,8 +38,10 @@ import {
 } from "@/components/ui/table"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { useQuery } from "@tanstack/react-query"
+import { useQueries, useQueryClient } from "@tanstack/react-query"
 import { apiHandlers } from "@/lib/api/instance"
+import { DateRangeFilter } from "./dateRangeFilter"
+import { DateRange } from "react-day-picker"
 
 
 
@@ -121,7 +124,6 @@ const columns: ColumnDef<InputData>[] = [
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const payment = row.original
 
       return (
         <DropdownMenu>
@@ -133,14 +135,9 @@ const columns: ColumnDef<InputData>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              Copy payment ID
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
+            <DropdownMenuItem>Edit {sentenceCase(row.original.type)}</DropdownMenuItem>
+            <DropdownMenuItem>Delete {sentenceCase(row.original.type)}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -149,23 +146,44 @@ const columns: ColumnDef<InputData>[] = [
 ]
 
 export function AllExpenseList() {
+  const today =  moment().startOf("month").toDate()
+  const queryClient = useQueryClient();
   const [inputData, setInputData] = React.useState([])
-  const { isFetching } = useQuery({
-    queryKey: ['get-expenses'],
-    queryFn: async () => {
-      const { data } = await apiHandlers.getAllExpenses()
-      setInputData(data.result)
-      return data
-    },
+  const [filteredData, setFilteredData] = React.useState([])
+  const [categories, setCatgories] = React.useState([])
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: today, 
+    to: addDays(today, 30),
+  })
+  const results = useQueries({
+    queries: [
+      {
+        queryKey: ['get-expenses',{ startDate: date?.from, endDate: date?.to }],
+        queryFn: async ({ queryKey }) => {
+          const [, params] = queryKey  as [string, { startDate: string; endDate: string }];       
+
+          const { data } = await apiHandlers.getAllExpenses(params)
+          setInputData(data.result)
+          setFilteredData(data.result)
+          return data
+        }, staleTime: Infinity
+      },
+      {
+        queryKey: ['get-categories', 2], queryFn: async () => {
+          const { data } = await apiHandlers.getExpenseCategory()
+          setCatgories(data.result)
+          return data
+        },
+      },
+    ],
   })
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useReactTable({
-    data: inputData,
+    data: filteredData,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -182,7 +200,25 @@ export function AllExpenseList() {
       rowSelection,
     },
   })
+  const handleCategoryChange = React.useCallback((category: string) => {
+    if (category === "all") {
+      setFilteredData(inputData)
 
+    } else {
+      const newdata = filteredData.filter((item: any) => item.category.name.toLowerCase() === category.toLowerCase())
+      setFilteredData(newdata)
+    }
+  }, [])
+  const handleDateChange = React.useCallback((date: any) => {
+    if (date) {
+      queryClient.invalidateQueries({
+        queryKey: ['get-expenses', { startDate: date.from, endDate: date.to }],
+      });
+    } else {
+      setFilteredData(inputData)
+    }
+    setDate(date)
+  },[])
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
@@ -194,32 +230,35 @@ export function AllExpenseList() {
           }
           className="max-w-sm"
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <DropdownMenu >
+          <DropdownMenuTrigger asChild className="mx-2">
             <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown />
+              Category <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
+            <DropdownMenuCheckboxItem
+              className="capitalize"
+              onCheckedChange={() => handleCategoryChange("all")}
+            >
+              All
+            </DropdownMenuCheckboxItem>
+            {categories
+              .map((item: any) => {
                 return (
                   <DropdownMenuCheckboxItem
-                    key={column.id}
+                    key={item.id}
                     className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
+                    onCheckedChange={() => handleCategoryChange(item.name)}
                   >
-                    {column.id}
+                    {item.name}
                   </DropdownMenuCheckboxItem>
                 )
               })}
           </DropdownMenuContent>
         </DropdownMenu>
+        <DateRangeFilter date={date} handleDateChange={handleDateChange} />
+
       </div>
       <div className="rounded-md border">
         <ScrollArea className="h-[450px] w-full">
@@ -260,15 +299,15 @@ export function AllExpenseList() {
                     ))}
                   </TableRow>
                 ))
-              ) : isFetching ? (
+              ) : results[0].isFetching ? (
                 <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center flex justify-center items-center mx-auto"
-                >
-                  <Loader2 className="animate-spin mr-2" /> Loading...
-                </TableCell>
-              </TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center flex justify-center items-center mx-auto"
+                  >
+                    <Loader2 className="animate-spin mr-2" /> Loading...
+                  </TableCell>
+                </TableRow>
               ) : (
                 <TableRow>
                   <TableCell

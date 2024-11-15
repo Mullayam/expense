@@ -6,6 +6,8 @@ import { apiHandlers } from '@/lib/api/instance';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
+import { setLimit } from '@/store/slices/auth.actions';
+import { useAppDispatch } from '../../../hooks/use-store';
 
 interface BudgetFormData {
   budget: string;
@@ -14,6 +16,7 @@ interface BudgetFormData {
 
 
 const ExpenseLimitForm: React.FC = () => {
+  const dispatch = useAppDispatch()
   const { toast } = useToast()
   const {
     register,
@@ -23,35 +26,40 @@ const ExpenseLimitForm: React.FC = () => {
   const { data: budgetData, isFetching } = useQuery({
     queryKey: ["budget"],
     queryFn: async () => apiHandlers.getBudget({
-      month: (new Date().getMonth()+1).toString(),
+      month: (new Date().getMonth() + 1).toString(),
       year: new Date().getFullYear().toString()
     }),
   })
   const onSubmit = async (value: BudgetFormData) => {
     try {
-
+      const newData = {
+        amount: value.budget,
+        month: (new Date().getMonth() + 1).toString(),
+        year: new Date().getFullYear().toString()
+      }
       if (budgetData?.data?.result) {
-        const { data } = await apiHandlers.updateBudgetLimit(budgetData?.data?.result.id, {
-          amount: value.budget,
-          month: (new Date().getMonth()+1).toString(),
-
-          year: new Date().getFullYear().toString()
-        })
+        const { data } = await apiHandlers.updateBudgetLimit(budgetData?.data?.result.id, newData)
         if (!data.success) {
           throw new Error(data.message)
         }
+        dispatch(setLimit({
+          amount: value.budget,
+          current_month: (new Date().getMonth() + 1).toString(),
+          current_year: new Date().getFullYear().toString()
+        }))
         toast({ title: data.message, variant: "default" })
         return
       }
-      const { data } = await apiHandlers.setBudgetLimit({
-        amount: value.budget,
-        month: (new Date().getMonth()+1).toString(),
-        year: new Date().getFullYear().toString()
-      })
+      const { data } = await apiHandlers.setBudgetLimit(newData)
       if (!data.success) {
         throw new Error(data.message)
       }
       toast({ title: data.message, variant: "default" })
+      dispatch(setLimit({
+        amount: value.budget,
+        current_month: (new Date().getMonth() + 1).toString(),
+        current_year: new Date().getFullYear().toString()
+      }))
 
     } catch (error: any) {
       toast({ title: error.message, variant: "destructive" })
@@ -108,7 +116,7 @@ const ExpenseLimitForm: React.FC = () => {
                  hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 
                  focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors"
           >
-         {isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin text-center" /> : budgetData?.data?.result ? 'Update Expense Limit' : 'Set Expense Limit'}  
+            {isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin text-center" /> : budgetData?.data?.result ? 'Update Expense Limit' : 'Set Expense Limit'}
           </button>
         </form>
       </CardContent>

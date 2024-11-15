@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useToast } from '@/hooks/use-toast';
+import { apiHandlers } from '@/lib/api/instance';
 import { useForm } from 'react-hook-form';
 
 interface FormInputs {
@@ -7,8 +10,9 @@ interface FormInputs {
 }
 
 export default function IncomeSourceForm() {
+    const { toast } = useToast();
     const {
-      
+
         register,
         handleSubmit,
         reset,
@@ -18,15 +22,29 @@ export default function IncomeSourceForm() {
         {
             defaultValues: {
                 label: '',
-                category: '',
                 amount: 0,
             },
         }
     );
 
-    const onSubmitForm = (data: FormInputs) => {
-        console.log(data);
-        reset();
+    const onSubmitForm = async (input: FormInputs) => {
+        try {
+            const { data } = await apiHandlers.addNewExpense({
+                type: 'income',
+                category: input.category,
+                description: input.label,
+                amount: input.amount.toString(),
+                date: new Date().toISOString().split('T')[0],
+            })
+            if (!data.success) {
+                throw new Error(data.message)
+            }
+            toast({ title: data.message, variant: 'default' });
+
+            reset();
+        } catch (error: any) {
+            toast({ title: 'Failed to add income source', description: error.message, variant: 'destructive' });
+        }
     };
 
     return (
@@ -73,33 +91,7 @@ export default function IncomeSourceForm() {
                         <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
                     )}
                 </div>
-                {/* <div className="mb-6">
 
-                    <FormField
-                        control={control}
-                        name="category"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Category</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select category" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {categories["income"].map((category) => (
-                                            <SelectItem key={category} value={category.toLowerCase()}>
-                                                {category}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div> */}
                 <button
                     type="submit"
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-200"

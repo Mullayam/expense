@@ -24,12 +24,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiHandlers } from '@/lib/api/instance';
-import { useEffect, useState } from 'react';
+import {   useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 
 const formSchema = z.object({
-    type: z.enum(['expense', 'income']),
+    type: z.enum(['expense', 'income']).default('expense'),
     category: z.string().min(1, 'Category is required'),
     amount: z.string().min(1, 'Amount is required'),
     date: z.string().min(1, 'Date is required'),
@@ -42,7 +42,7 @@ export function ExpenseForm() {
     const { toast } = useToast()
     const [categories, setCategories] = useState<{ id: string; name: string, type: string }[]>([])
 
-    const data = useQuery({
+     useQuery({
         queryKey: ['get-categories'],
         queryFn: async () => {
             const { data } = await apiHandlers.getExpenseCategory()
@@ -65,9 +65,9 @@ export function ExpenseForm() {
     })
 
     const handleSubmit = (values: z.infer<typeof formSchema>) => {
-       
+
         mutate(values, {
-            onSuccess({data}:any) {
+            onSuccess({ data }: any) {
                 if (!data.success) {
                     toast({
                         title: data.message,
@@ -80,17 +80,7 @@ export function ExpenseForm() {
         });
     };
 
-    const transactionType = form.watch('type');
-    useEffect(() => {
 
-        // if (transactionType) {
-          
-        //     const oldCategories = catData?.result
-        //     const filteredCategories = oldCategories.filter((category) => category.type.toLowerCase() === transactionType.toLowerCase())
-        //     console.log(filteredCategories)
-        //     setCategories(filteredCategories)
-        // }
-    }, [transactionType])
     return (
         <Card className='w-[48%]'>
             <CardHeader>
@@ -101,27 +91,7 @@ export function ExpenseForm() {
             <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="type"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Type</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select type" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="expense">Expense</SelectItem>
-                                            <SelectItem value="income">Income</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+
 
                         <FormField
                             control={form.control}
@@ -194,13 +164,13 @@ export function ExpenseForm() {
                             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Add Transaction
                         </Button>
-                      
+
                     </form>
                 </Form>
                 <Button onClick={() => form.reset()} className="w-full mt-2 bg-orange-600 hover:bg-orange-700" disabled={isPending}>
-                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Reset Form
-                        </Button>
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Reset Form
+                </Button>
             </CardContent>
         </Card>
     );

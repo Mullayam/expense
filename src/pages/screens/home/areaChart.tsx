@@ -28,17 +28,18 @@ import {
 const chartConfig = {
   income: {
     label: "Income",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--chart-2))",
   },
   expense: {
     label: "Expense",
-    color: "hsl(var(--chart-2))",
+    color: "hsl(var(--chart-1))",
   },
 } satisfies ChartConfig
 
-export function MonthlyAreaChart({ chartData }: { chartData: { date: "2024-11-01", income: 222, expense: 150 }[] }) {
+export function MonthlyAreaChart({ chartData ,expenseLimit}: {expenseLimit: number, chartData: { date: "2024-11-01", income: 222, expense: 150 }[] }) {
   const [timeRange, setTimeRange] = React.useState("30d")
   const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("expense")
+  
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.date)
     const referenceDate = new Date()
@@ -63,6 +64,7 @@ export function MonthlyAreaChart({ chartData }: { chartData: { date: "2024-11-01
     }),
     []
   )
+  const warning = total.expense > expenseLimit;
 
   return (
     <Card>
@@ -114,10 +116,13 @@ export function MonthlyAreaChart({ chartData }: { chartData: { date: "2024-11-01
         </div>
       </CardHeader>
       <CardContent className="px-2 sm:p-6">
+      {warning && <div className="text-red-500 font-bold">⚠️ Expense limit exceeded! Limit is {total.expense}</div>}
+
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
+
           <LineChart
             accessibilityLayer
             data={filteredData}
@@ -166,86 +171,7 @@ export function MonthlyAreaChart({ chartData }: { chartData: { date: "2024-11-01
           </LineChart>
         </ChartContainer>
       </CardContent>
-      {/* </CardHeader>
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
-          <AreaChart data={filteredData}>
-            <defs>
-              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="#1f5937"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="#1f5937"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })
-              }}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })
-                  }}
-                  indicator="dot"
-                />
-              }
-            />
-            <Area
-              dataKey="income"
-              type="natural"
-              fill="url(#fillMobile)"
-              stroke="hsl(var(--chart-1))"
-              stackId="a"
-            />
-            <Area
-              dataKey="expense"
-              type="natural"
-              fill="url(#fillDesktop)"
-              stroke="hsl(var(--chart-2))"
-              stackId="a"
-            />
-            <ChartLegend content={<ChartLegendContent />} />
-          </AreaChart>
-        </ChartContainer>
-      </CardContent> */}
+   
     </Card>
   )
 }

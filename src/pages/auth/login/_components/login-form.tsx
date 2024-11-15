@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAppDispatch } from '@/hooks/use-store';
-import { loginUser } from '@/store/slices/auth.actions';
+import { loginUser, setLimit } from '@/store/slices/auth.actions';
 import { setAuthorizationHeader } from '@/lib/api/handler';
 import axios from 'axios';
 import { __config } from '@/lib/config';
@@ -39,6 +39,7 @@ export function LoginForm() {
       }
       toast({ title: data.message, variant: "default" })
       localStorage.setItem("token", data.result.access_token)
+      dispatch(setLimit(data.result.budgetLimit))
       dispatch(loginUser(data.result.user, data.result.access_token))
       setAuthorizationHeader(data.result.access_token)
       return navigate("/")

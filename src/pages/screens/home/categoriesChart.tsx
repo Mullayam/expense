@@ -16,31 +16,18 @@ import {
 } from "@/components/ui/chart";
 import moment from "moment";
 interface RootObject {
-  created_at: string;
-  amount: number;
-  type: string;
-  category: Category;
+  [x: string]: RootObjectValue;
+
 }
 
-interface Category {
+interface RootObjectValue {
   name: string;
+  amount: number;
 }
-export function SpendingCategoriesChart({ data }: { data: RootObject[] }) {
-  const getTotalAmountByCategory = (data: RootObject[]) => {
-    return data.reduce((acc: any, item: any) => {
-      if (!acc[item.category.name]) {
-        // If category not in accumulator, initialize it with the current item's amount
-        acc[item.category.name] = { name: item.category.name, amount: 0 };
-      }
-      // Add the amount to the existing category total
-      acc[item.category.name].amount += item.amount;
-      return acc;
-    }, {});
-  };
-  const totalAmounts = getTotalAmountByCategory(data);
+export function SpendingCategoriesChart({ data }: { data: RootObject }) {
 
 
-  const currentMonthFoodExpenses = Object.values(totalAmounts)
+  const currentMonthFoodExpenses = Object.values(data)
     .filter((item: any) => moment(item.created_at).isSame(moment(), "month"))
     .map((item: any) => ({ name: item.name, amount: item.amount }));
   const chartConfig: any = {};
@@ -90,7 +77,8 @@ export function SpendingCategoriesChart({ data }: { data: RootObject[] }) {
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
           Showing total spending for Food in the current month
-        </div> </CardFooter>
+        </div>
+      </CardFooter>
     </Card>
   );
 }

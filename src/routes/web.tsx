@@ -16,9 +16,9 @@ export const router = createBrowserRouter([
     },
     {
         path: "/",
-        element: <Suspense fallback={<FallbackSpinner />}>
+        element: (<Suspense fallback={<FallbackSpinner />}>
             <RootLayout />
-        </Suspense>,
+        </Suspense>),
         errorElement: <FallbackSpinner />,
         children: [
             {

@@ -4,6 +4,7 @@ import { getTokenFromLocalStorage } from "@/lib/api/handler"
 import { jwtDecode } from "jwt-decode"
 let user: IUser | null;
 const token = getTokenFromLocalStorage()
+const limit = localStorage.getItem("limit") ? JSON.parse(localStorage.getItem("limit") as string) : null
 const payload: IUser | null = token ? jwtDecode(token) : null
 if (!payload) {
     user = null
@@ -20,12 +21,18 @@ type InitialState = {
     token: string | null
     loading: boolean
     error: string | null
+    limit: {
+        month: string
+        year: string
+        amount: string
+    } | null
 }
 const initialState: InitialState = {
     user: user || null,
     token: token || null,
     error: null,
-    loading: false
+    loading: false,
+    limit: limit || null
 }
 export const authSlice = createSlice({
     name: 'auth',
@@ -44,7 +51,16 @@ export const authSlice = createSlice({
             state.error = action.payload
             return state
         },
-
+        setLimit: (state, action: PayloadAction<{ current_month: string, current_year: string,  amount: string }>) => {
+            const filteredPayload = {
+                month: action.payload.current_month,
+                year: action.payload.current_year,
+                amount: action.payload.amount
+            }
+            localStorage.setItem("limit", JSON.stringify(filteredPayload))
+            state.limit = filteredPayload
+            return state
+        }
     },
 
 })
