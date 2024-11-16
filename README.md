@@ -14,8 +14,10 @@ This application is a **Personal Expense Tracker** built to help users manage th
 
 - **Node.js**
 - **Express**
-- **MongoDB/PostgreSQL** (Bonus points for using **TypeScript**)
-- **Authorization**: JSON Web Tokens (JWT) for secure authentication
+- **PostgreSQL** 
+- **TypeScript**
+- **Typeorm**
+- **Authorization**
 
 ---
 
