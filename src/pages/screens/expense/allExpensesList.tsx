@@ -15,7 +15,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { ChevronDown, Loader2, MoreHorizontal } from "lucide-react"
-import { sentenceCase } from "change-case"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -42,6 +41,8 @@ import { useQueries, useQueryClient } from "@tanstack/react-query"
 import { apiHandlers } from "@/lib/api/instance"
 import { DateRangeFilter } from "./dateRangeFilter"
 import { DateRange } from "react-day-picker"
+import { useToast } from "@/hooks/use-toast"
+import { useNavigate } from "react-router-dom"
 
 
 
@@ -59,108 +60,129 @@ interface InputData {
 interface Category {
   name: string;
 }
-const columns: ColumnDef<InputData>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => (
-      <Badge className="capitalize" variant={row.original.type === "income" ? "success" : "destructive"}>{row.getValue("type")}</Badge>
-    ),
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => <div>{row.getValue("description")}</div>,
-  },
-  {
-    accessorKey: "category.name",
-    header: () => <div className="text-right">Category</div>,
-    cell: ({ row }) => <div className="text-right ">{row.original.category.name}</div>,
-  },
-  {
-    accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"))
 
-      // Format the amount as a dollar amount
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "INR",
-      }).format(amount)
-
-      return <div className={`text-right font-medium ${row.original.type === "income" ? "text-green-500" : "text-red-500"}`}> {row.original.type === "income" ? "+ " : "- "}{formatted}</div>
-    },
-
-  },
-  {
-    accessorKey: "created_at",
-    header: () => <div className="text-center">Date</div>,
-    cell: ({ row }) => <div className="lowercase text-center">{moment(row.getValue("created_at")).format("DD-MM-YYYY hh:mm A")}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Edit {sentenceCase(row.original.type)}</DropdownMenuItem>
-            <DropdownMenuItem>Delete {sentenceCase(row.original.type)}</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
 
 export function AllExpenseList() {
-  const today =  moment().startOf("month").toDate()
+  const { toast } = useToast()
+  const navigate = useNavigate()
+  const today = moment().startOf("month").toDate()
   const queryClient = useQueryClient();
   const [inputData, setInputData] = React.useState([])
   const [filteredData, setFilteredData] = React.useState([])
   const [categories, setCatgories] = React.useState([])
+  const handleDelete = async (id:string) => {
+    try {
+      const { data } = await apiHandlers.deleteExpense(id)
+      if (!data.success) {
+        throw new Error(data.message)
+      }
+      queryClient.invalidateQueries({
+        queryKey: ['get-expenses', { startDate: date?.from, endDate: date?.to }],
+      })
+      toast({ title: data.message, variant: "default" })
+
+    } catch (error: any) {
+      toast({ title: error.message, variant: "destructive" })
+
+    }
+  }
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: today, 
+    from: today,
     to: addDays(today, 30),
   })
+  const columns: ColumnDef<InputData>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "type",
+      header: "Type",
+      cell: ({ row }) => (
+        <Badge className="capitalize" variant={row.original.type === "income" ? "success" : "destructive"}>{row.getValue("type")}</Badge>
+      ),
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => <div>{row.getValue("description")}</div>,
+    },
+    {
+      accessorKey: "category.name",
+      header: () => <div className="text-right">Category</div>,
+      cell: ({ row }) => <div className="text-right ">{row.original.category.name}</div>,
+    },
+    {
+      accessorKey: "amount",
+      header: () => <div className="text-right">Amount</div>,
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("amount"))
+
+        // Format the amount as a dollar amount
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "INR",
+        }).format(amount)
+
+        return <div className={`text-right font-medium ${row.original.type === "income" ? "text-green-500" : "text-red-500"}`}> {row.original.type === "income" ? "+ " : "- "}{formatted}</div>
+      },
+
+    },
+    {
+      accessorKey: "created_at",
+      header: () => <div className="text-center">Date</div>,
+      cell: ({ row }) => <div className="lowercase text-center">{moment(row.getValue("created_at")).format("DD-MM-YYYY hh:mm A")}</div>,
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate(`/add-new-expense`,{
+               state:row.original 
+              })}>Edit </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDelete(row.original.id)}>Delete</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
   const results = useQueries({
     queries: [
       {
-        queryKey: ['get-expenses',{ startDate: date?.from, endDate: date?.to }],
+        queryKey: ['get-expenses', { startDate: date?.from, endDate: date?.to }],
         queryFn: async ({ queryKey }) => {
-          const [, params] = queryKey  as [string, { startDate: string; endDate: string }];       
+          const [, params] = queryKey as [string, { startDate: string; endDate: string }];
 
           const { data } = await apiHandlers.getAllExpenses(params)
           setInputData(data.result)
@@ -200,15 +222,15 @@ export function AllExpenseList() {
       rowSelection,
     },
   })
-  const handleCategoryChange = React.useCallback((category: string) => {
+  const handleCategoryChange = (category: string) => {
     if (category === "all") {
       setFilteredData(inputData)
 
     } else {
-      const newdata = filteredData.filter((item: any) => item.category.name.toLowerCase() === category.toLowerCase())
+      const newdata = inputData.filter((item: any) => item.category.name.toLowerCase() === category.toLowerCase())
       setFilteredData(newdata)
     }
-  }, [])
+  }
   const handleDateChange = React.useCallback((date: any) => {
     if (date) {
       queryClient.invalidateQueries({
@@ -218,7 +240,7 @@ export function AllExpenseList() {
       setFilteredData(inputData)
     }
     setDate(date)
-  },[])
+  }, [])
   return (
     <div className="w-full">
       <div className="flex items-center py-4">

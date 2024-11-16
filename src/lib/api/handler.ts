@@ -17,7 +17,7 @@ if (user) {
     }
     else {
         localStorage.removeItem("token")
-        window.location.reload()
+        window.location.href = "/login"
     }
 
 }

@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { setLimit } from '@/store/slices/auth.actions';
-import { useAppDispatch } from '../../../hooks/use-store';
+import { useAppDispatch, useAppSelector } from '../../../hooks/use-store';
 
 interface BudgetFormData {
   budget: string;
@@ -17,6 +17,7 @@ interface BudgetFormData {
 
 const ExpenseLimitForm: React.FC = () => {
   const dispatch = useAppDispatch()
+  const limit = useAppSelector(x => x.auth.limit);
   const { toast } = useToast()
   const {
     register,
@@ -65,6 +66,7 @@ const ExpenseLimitForm: React.FC = () => {
       toast({ title: error.message, variant: "destructive" })
     }
   }
+ 
   return (
     <Card className='w-[48%]'>
       <CardHeader>
@@ -94,7 +96,7 @@ const ExpenseLimitForm: React.FC = () => {
                 {...register('budget', {
                   required: 'Budget is required',
                   min: { value: 0, message: 'Budget must be positive' },
-                  value: budgetData?.data?.result?.amount || 1000,
+                  value:limit?.amount|| "1000",
                   pattern: { value: /^\d+$/, message: 'Please enter a valid number' }
                 })}
               />
@@ -116,7 +118,7 @@ const ExpenseLimitForm: React.FC = () => {
                  hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 
                  focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors"
           >
-            {isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin text-center" /> : budgetData?.data?.result ? 'Update Expense Limit' : 'Set Expense Limit'}
+            {isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin text-center" /> : limit?.amount ? 'Update Expense Limit' : 'Set Expense Limit'}
           </button>
         </form>
       </CardContent>

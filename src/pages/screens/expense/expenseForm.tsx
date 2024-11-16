@@ -24,8 +24,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiHandlers } from '@/lib/api/instance';
-import {   useState } from 'react';
+import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 
 const formSchema = z.object({
@@ -36,13 +37,28 @@ const formSchema = z.object({
     description: z.string().min(1, 'Description is required'),
 });
 
+interface LocationState {
+    id: string;
+    created_at: string;
+    updated_at: string;
+    amount: number;
+    description: string;
+    type: string;
+    category: Category;
+}
 
+interface Category {
+    name: string;
+}
 
 export function ExpenseForm() {
     const { toast } = useToast()
+    const location = useLocation()
+    const navigate = useNavigate()
+    const state = location.state as LocationState
     const [categories, setCategories] = useState<{ id: string; name: string, type: string }[]>([])
 
-     useQuery({
+    useQuery({
         queryKey: ['get-categories'],
         queryFn: async () => {
             const { data } = await apiHandlers.getExpenseCategory()
@@ -55,18 +71,40 @@ export function ExpenseForm() {
         defaultValues: {
             type: 'expense',
             category: categories[0]?.id || '',
-            amount: "0",
-            date: new Date().toISOString().split('T')[0],
-            description: '',
+            amount: state?.amount.toString() || "0",
+            date: state?.created_at ? new Date(state.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            description: state?.description || '',
         },
     });
     const { mutate, isPending } = useMutation({
         mutationFn: async (values: z.infer<typeof formSchema>) => apiHandlers.addNewExpense(values)
     })
-
+    const { mutate: updateMutate, isPending: updateIsPending } = useMutation({
+        mutationKey: ['update-expense', state?.id],
+        mutationFn: async (values: z.infer<typeof formSchema>) => apiHandlers.updateCurrentExpense(state?.id, values)
+    })
     const handleSubmit = (values: z.infer<typeof formSchema>) => {
-
-        mutate(values, {
+        if (!state) {
+            mutate(values, {
+                onSuccess({ data }: any) {
+                    if (!data.success) {
+                        toast({
+                            title: data.message,
+                            variant: "destructive",
+                        })
+                        return
+                    }
+                    toast({
+                        title: "Expense Added successfully",
+                        variant: "default",
+                    })
+                    form.reset();
+                },
+            });
+            return
+        }
+        const newValues = values as any
+        updateMutate(newValues, {
             onSuccess({ data }: any) {
                 if (!data.success) {
                     toast({
@@ -75,9 +113,15 @@ export function ExpenseForm() {
                     })
                     return
                 }
+                toast({
+                    title: "Expense updated successfully",
+                    variant: "default",
+                })
+                navigate(-1)
                 form.reset();
             },
         });
+
     };
 
 
@@ -113,6 +157,7 @@ export function ExpenseForm() {
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    {categories.length === 0 && <small className='text-red-500'> Add category first</small>}                                   
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -160,17 +205,18 @@ export function ExpenseForm() {
                             )}
                         />
 
-                        <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700" disabled={isPending}>
-                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Add Transaction
+                        <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700" disabled={state ? updateIsPending : isPending}>
+                            {state ? updateIsPending : isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {state ? 'Update Transaction' : 'Add Transaction'}
                         </Button>
 
                     </form>
                 </Form>
-                <Button onClick={() => form.reset()} className="w-full mt-2 bg-orange-600 hover:bg-orange-700" disabled={isPending}>
+                {!state && <Button onClick={() => form.reset()} className="w-full mt-2 bg-orange-600 hover:bg-orange-700" disabled={isPending}>
                     {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Reset Form
-                </Button>
+                </Button>}
+
             </CardContent>
         </Card>
     );

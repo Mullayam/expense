@@ -43,7 +43,6 @@ export function NavUser() {
         throw new Error(data.message)
       }
       toast({ title: "Logout successfully", variant: "default" })
-       localStorage.removeItem("token")
       dispatch(logoutUser())
       return navigate("/login")
     } catch (error: any) {

@@ -4,8 +4,10 @@ import { getTokenFromLocalStorage } from "@/lib/api/handler"
 import { jwtDecode } from "jwt-decode"
 let user: IUser | null;
 const token = getTokenFromLocalStorage()
-const limit = localStorage.getItem("limit") ? JSON.parse(localStorage.getItem("limit") as string) : null
 const payload: IUser | null = token ? jwtDecode(token) : null
+
+const getLimit = localStorage.getItem("limit") ? JSON.parse(localStorage.getItem("limit") as string) : null
+const totalExpense = localStorage.getItem("totalExpense") ? localStorage.getItem("totalExpense") : null
 if (!payload) {
     user = null
 } else {
@@ -15,12 +17,13 @@ if (!payload) {
         name: payload.name,
     }
 }
-
+const limit = getLimit as InitialState["limit"]
 type InitialState = {
     user: IUser | null
     token: string | null
     loading: boolean
     error: string | null
+    totalExpense: string | null
     limit: {
         month: string
         year: string
@@ -32,6 +35,7 @@ const initialState: InitialState = {
     token: token || null,
     error: null,
     loading: false,
+    totalExpense: totalExpense,
     limit: limit || null
 }
 export const authSlice = createSlice({
@@ -51,13 +55,26 @@ export const authSlice = createSlice({
             state.error = action.payload
             return state
         },
-        setLimit: (state, action: PayloadAction<{ current_month: string, current_year: string,  amount: string }>) => {
+        setTotalExpense: (state, action: PayloadAction<string>) => {
+            state.totalExpense = action.payload
+            localStorage.setItem("totalExpense", action.payload?.toString())
+            return state
+        },
+        setUserLogout: (state) => {
+            localStorage.removeItem("token")
+            localStorage.removeItem("totalExpense")
+            localStorage.removeItem("limit")
+            state.user = null
+            return state
+        },
+        setLimit: (state, action: PayloadAction<{ month: string, year: string, amount: string }>) => {
             const filteredPayload = {
-                month: action.payload.current_month,
-                year: action.payload.current_year,
+                month: action.payload.month,
+                year: action.payload.year,
                 amount: action.payload.amount
             }
             localStorage.setItem("limit", JSON.stringify(filteredPayload))
+
             state.limit = filteredPayload
             return state
         }

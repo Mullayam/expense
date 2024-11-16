@@ -10,6 +10,9 @@ class ApiHandlers {
     handleRegister = async (data: { email: string, password: string,name:string }) => {
         return api.post('/register', { data });
     }
+    fetchUser = async () => {
+        return api.get('/user');
+    }
     getAllExpenses = async (dateRange?: { startDate: string, endDate: string }) => {
         return api.get('/get-expense',{
             params: {
@@ -19,13 +22,13 @@ class ApiHandlers {
         });
     }
     addNewExpense = async (data: { type: string, category: string, description: string, amount: string, date: string }) => {
-        return api.post('/add-new-expense',data);
+        return api.post('/expense',data);
     }
     updateCurrentExpense = async (id: string, data: { type: string, category: string, description: string, amount: string, date: string }) => {
-        return api.put('/add-new-expense/' + id, data);
+        return api.put('/expense/' + id, data);
     }
     deleteExpense = async (id: string) => {
-        return api.delete('/expense' + id);
+        return api.delete('/expense/' + id);
     }
     getSingleExpense = async (id: string) => {
         return api.get('/get-expense/' + id);

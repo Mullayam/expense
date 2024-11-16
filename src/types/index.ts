@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type Transaction = {
   id: string;
   type: 'expense' | 'income';
@@ -9,6 +10,6 @@ export type Transaction = {
 
 export type IUser = {
   id: string;
-  name: string;
   email: string;
+  name: string; 
 }

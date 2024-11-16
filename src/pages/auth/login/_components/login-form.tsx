@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAppDispatch } from '@/hooks/use-store';
-import { loginUser, setLimit } from '@/store/slices/auth.actions';
+import { loginUser} from '@/store/slices/auth.actions';
 import { setAuthorizationHeader } from '@/lib/api/handler';
 import axios from 'axios';
 import { __config } from '@/lib/config';
@@ -38,8 +38,7 @@ export function LoginForm() {
         throw new Error(data.message)
       }
       toast({ title: data.message, variant: "default" })
-      localStorage.setItem("token", data.result.access_token)
-      dispatch(setLimit(data.result.budgetLimit))
+      localStorage.setItem("token", data.result.access_token)    
       dispatch(loginUser(data.result.user, data.result.access_token))
       setAuthorizationHeader(data.result.access_token)
       return navigate("/")
@@ -51,7 +50,7 @@ export function LoginForm() {
   }
   const handleRegister = async (value: { email: string; password: string, name: string }) => {
     try {
-      const { data } =  await axios.post(__config.API_URL+"/api/v1/login", { data: value })
+      const { data } =  await axios.post(__config.API_URL+"/api/v1/register", { data: value })
       if (!data.success) {
         throw new Error(data.message)
       }
@@ -66,6 +65,7 @@ export function LoginForm() {
   }
   const onSubmit = async (value: { email: string; password: string, name?: string }) => {
     setIsDisbled(true)
+
     if (isSignEnabled) {
       handleRegister({ ...value, name: value.name! })
       return

@@ -1,11 +1,15 @@
 import { ExpenseForm } from './expenseForm';
 import ExpenseLimitForm from './expenseLimitForm';
+import { useLocation } from 'react-router-dom';
 
 const AddExpense = () => {
+  const location = useLocation()
+
   return (
     <div className='flex flex-row  gap-4 w-full flex-wrap'>
       <ExpenseForm />
-      <ExpenseLimitForm />
+      {!location.state && <ExpenseLimitForm />}
+     
     </div>
   )
 }

@@ -13,7 +13,6 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { useMutation } from "@tanstack/react-query"
 import { apiHandlers } from "@/lib/api/instance"
@@ -22,9 +21,7 @@ const formSchema = z.object({
     category: z.string().min(2, {
         message: "Category must be at least 2 characters.",
     }),
-    type: z.enum(["expense", "income"], {
-        required_error: "You need to select a type.",
-    }),
+
 })
 
 export function ExpenseCategoryManager() {
@@ -79,40 +76,7 @@ export function ExpenseCategoryManager() {
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="type"
-                            render={({ field }) => (
-                                <FormItem className="space-y-3">
-                                    <FormLabel>Type</FormLabel>
-                                    <FormControl>
-                                        <RadioGroup
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                            className="flex flex-col space-y-1"
-                                        >
-                                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                                <FormControl>
-                                                    <RadioGroupItem value="expense" />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">
-                                                    Expense
-                                                </FormLabel>
-                                            </FormItem>
-                                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                                <FormControl>
-                                                    <RadioGroupItem value="income" />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">
-                                                    Income
-                                                </FormLabel>
-                                            </FormItem>
-                                        </RadioGroup>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+
                         <Button type="submit" disabled={isPending}>Submit</Button>
                     </form>
                 </Form>
