@@ -29,7 +29,7 @@ const data = {
             isActive: true,
             items: [
                 {
-                    title: "All Expenses",
+                    title: "All Transactions",
                     url: "all-expenses",
                 },
                 {

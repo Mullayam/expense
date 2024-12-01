@@ -8,8 +8,7 @@ const AddExpense = () => {
   return (
     <div className='flex flex-row  gap-4 w-full flex-wrap'>
       <ExpenseForm />
-      {!location.state && <ExpenseLimitForm />}
-     
+      {!location.state && <ExpenseLimitForm />}     
     </div>
   )
 }

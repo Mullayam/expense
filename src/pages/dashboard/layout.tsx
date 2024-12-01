@@ -45,7 +45,7 @@ export function RootLayout() {
     if (!authUser.user) {
         return <Navigate to="/login" state={{ from: history.pathname }} />
     }
- 
+
     return (
         <SidebarProvider>
             <AppSidebar />

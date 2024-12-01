@@ -43,7 +43,6 @@ const MonthlyLineChart = ({ data, expenseLimit }: { data: any[], expenseLimit: n
     };
 
 
-
     return (
         <div style={{ height: "400px" }}>
             <Line data={chartData} options={{

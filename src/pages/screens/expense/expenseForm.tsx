@@ -99,6 +99,7 @@ export function ExpenseForm() {
                         variant: "default",
                     })
                     form.reset();
+                    form.setValue('category', categories[0]?.id || '')
                 },
             });
             return
@@ -205,7 +206,7 @@ export function ExpenseForm() {
                             )}
                         />
 
-                        <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700" disabled={state ? updateIsPending : isPending}>
+                        <Button type="submit"   className="w-full bg-purple-600 hover:bg-purple-700" disabled={(categories.length === 0) || (state ? updateIsPending : isPending)}>
                             {state ? updateIsPending : isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {state ? 'Update Transaction' : 'Add Transaction'}
                         </Button>

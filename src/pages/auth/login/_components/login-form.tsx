@@ -37,10 +37,10 @@ export function LoginForm() {
       if (!data.success) {
         throw new Error(data.message)
       }
-      toast({ title: data.message, variant: "default" })
       localStorage.setItem("token", data.result.access_token)    
       dispatch(loginUser(data.result.user, data.result.access_token))
       setAuthorizationHeader(data.result.access_token)
+      toast({ title: data.message, variant: "default" })
       return navigate("/")
     } catch (error: any) {
       toast({ title: error.message, variant: "destructive" })

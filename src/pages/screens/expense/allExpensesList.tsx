@@ -126,9 +126,9 @@ export function AllExpenseList() {
       cell: ({ row }) => <div>{row.getValue("description")}</div>,
     },
     {
-      accessorKey: "category.name",
+      accessorKey: "category",
       header: () => <div className="text-right">Category</div>,
-      cell: ({ row }) => <div className="text-right ">{row.original.category.name}</div>,
+      cell: ({ row }) => <div className="text-right ">{row.original?.category?.name || "-"}</div>,
     },
     {
       accessorKey: "amount",
@@ -227,7 +227,8 @@ export function AllExpenseList() {
       setFilteredData(inputData)
 
     } else {
-      const newdata = inputData.filter((item: any) => item.category.name.toLowerCase() === category.toLowerCase())
+      const newdata = inputData.filter((item: any) => item.category?.name.toLowerCase() === category.toLowerCase())
+      console.log(newdata)
       setFilteredData(newdata)
     }
   }
